@@ -40,12 +40,15 @@ Question:
 Search query:
 """
 
-    def __init__(self, search_client: SearchClient, chatgpt_deployment: str, gpt_deployment: str, sourcepage_field: str, content_field: str):
+    def __init__(self, search_client: SearchClient, oai_service_name: str, oai_service_key: str, chatgpt_deployment: str, gpt_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client
         self.chatgpt_deployment = chatgpt_deployment
         self.gpt_deployment = gpt_deployment
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
+        openai.api_base = 'https://' + oai_service_name + '.openai.azure.com/'
+        openai.api_type = 'azure'
+        openai.api_key = oai_service_key
 
     def run(self, history: list[dict], overrides: dict) -> any:
         use_semantic_captions = True if overrides.get("semantic_captions") else False

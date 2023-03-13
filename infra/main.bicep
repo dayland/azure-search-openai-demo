@@ -6,9 +6,16 @@ targetScope = 'subscription'
 param environmentName string
 
 @minLength(1)
+@maxLength(5)
+param randomString string
+
+@minLength(1)
 @description('Primary location for all resources')
 param location string
 
+param useExistingAOAIService bool
+param azureOpenAIServiceName string
+param azureOpenAIServiceKey string
 param cognitiveServicesAccountName string = ''
 param cognitiveServicesSkuName string = 'S0'
 param appServicePlanName string = ''
@@ -28,12 +35,12 @@ param chatGptModelName string = 'gpt-35-turbo'
 param principalId string = ''
 
 var abbrs = loadJsonContent('abbreviations.json')
-var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
-var tags = { 'azd-env-name': environmentName }
+var tags = { ProjectName: 'Information Assistant' }
+var prefix = 'infoasst'
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
+  name: !empty(resourceGroupName) ? resourceGroupName : '${prefix}-searchoai-${environmentName}'
   location: location
   tags: tags
 }
@@ -43,7 +50,7 @@ module appServicePlan 'core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
   scope: rg
   params: {
-    name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
+    name: !empty(appServicePlanName) ? appServicePlanName : '${prefix}-${abbrs.webServerFarms}${randomString}'
     location: location
     tags: tags
     sku: {
@@ -59,7 +66,7 @@ module backend 'core/host/appservice.bicep' = {
   name: 'web'
   scope: rg
   params: {
-    name: !empty(backendServiceName) ? backendServiceName : '${abbrs.webSitesAppService}backend-${resourceToken}'
+    name: !empty(backendServiceName) ? backendServiceName : '${prefix}-${abbrs.webSitesAppService}${randomString}'
     location: location
     tags: union(tags, { 'azd-service-name': 'backend' })
     appServicePlanId: appServicePlan.outputs.id
@@ -70,20 +77,21 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
+      AZURE_OPENAI_SERVICE: azureOpenAIServiceName//cognitiveServices.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
+      AZURE_OPENAI_SERVICE_KEY: azureOpenAIServiceKey
     }
   }
 }
 
-module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
+module cognitiveServices 'core/ai/cognitiveservices.bicep' = if (!useExistingAOAIService) {
   scope: rg
   name: 'openai'
   params: {
-    name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${prefix}-${abbrs.openAIServices}${randomString}'
     location: location
     tags: tags
     sku: {
@@ -104,7 +112,7 @@ module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
       {
         name: chatGptDeploymentName
         model: {
-          format: 'OpenAI'
+         format: 'OpenAI'
           name: chatGptModelName
           version: '0301'
         }
@@ -120,7 +128,7 @@ module searchServices 'core/search/search-services.bicep' = {
   scope: rg
   name: 'search-services'
   params: {
-    name: !empty(searchServicesName) ? searchServicesName : 'gptkb-${resourceToken}'
+    name: !empty(searchServicesName) ? searchServicesName : '${prefix}-${abbrs.searchSearchServices}${randomString}'
     location: location
     tags: tags
     authOptions: {
@@ -139,12 +147,12 @@ module storage 'core/storage/storage-account.bicep' = {
   name: 'storage'
   scope: rg
   params: {
-    name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
+    name: !empty(storageAccountName) ? storageAccountName : '${prefix}${abbrs.storageStorageAccounts}${randomString}'
     location: location
     tags: tags
     publicNetworkAccess: 'Enabled'
     sku: {
-      name: 'Standard_ZRS'
+      name: 'Standard_LRS'
     }
     deleteRetentionPolicy: {
       enabled: true
@@ -242,9 +250,12 @@ module searchRoleBackend 'core/security/role.bicep' = {
 }
 
 output AZURE_LOCATION string = location
-output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
+output AZURE_OPENAI_SERVICE string = azureOpenAIServiceName//cognitiveServices.outputs.name
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = containerName
 output BACKEND_URI string = backend.outputs.uri
+output BACKEND_NAME string = backend.outputs.name
+output RESOURCE_GROUP_NAME string = rg.name
+output AZURE_OPENAI_GPT_DEPLOYMENT string = azureOpenAIServiceKey
