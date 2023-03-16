@@ -18,6 +18,8 @@ param azureOpenAIServiceName string
 param azureOpenAIServiceKey string
 param cognitiveServicesAccountName string = ''
 param cognitiveServicesSkuName string = 'S0'
+param cognitiveServiesForSearchName string = ''
+param cognitiveServiesForSearchSku string = 'S0'
 param appServicePlanName string = ''
 param resourceGroupName string = ''
 param backendServiceName string = ''
@@ -25,7 +27,7 @@ param searchServicesName string = ''
 param searchServicesSkuName string = 'standard'
 param storageAccountName string = ''
 param containerName string = 'content'
-param searchIndexName string = 'gptkbindex'
+param searchIndexName string = 'all-files-index'
 param gptDeploymentName string = 'davinci'
 param gptModelName string = 'text-davinci-003'
 param chatGptDeploymentName string = 'chat'
@@ -140,6 +142,10 @@ module searchServices 'core/search/search-services.bicep' = {
       name: searchServicesSkuName
     }
     semanticSearch: 'free'
+    cogServicesName: !empty(cognitiveServiesForSearchName) ? cognitiveServiesForSearchName : '${prefix}-${abbrs.cognitiveServicesAccounts}${randomString}'
+    cogServicesSku: {
+      name: cognitiveServiesForSearchSku
+    }
   }
 }
 
@@ -259,3 +265,5 @@ output BACKEND_URI string = backend.outputs.uri
 output BACKEND_NAME string = backend.outputs.name
 output RESOURCE_GROUP_NAME string = rg.name
 output AZURE_OPENAI_GPT_DEPLOYMENT string = azureOpenAIServiceKey
+#disable-next-line outputs-should-not-contain-secrets
+output COG_SERVICES_FOR_SEARCH_KEY string = searchServices.outputs.cogServiceKey

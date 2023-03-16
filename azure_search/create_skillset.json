@@ -1,0 +1,239 @@
+{
+  "name": "azuresearch-semantic-skillset",
+  "description": "Skillset for semantic search",
+  "skills": [
+    {
+      "@odata.type": "#Microsoft.Skills.Text.V3.EntityRecognitionSkill",
+      "name": "#1",
+      "description": null,
+      "context": "/document/content",
+      "categories": [
+        "Person",
+        "Quantity",
+        "Organization",
+        "URL",
+        "Email",
+        "Location",
+        "DateTime"
+      ],
+      "defaultLanguageCode": "en",
+      "minimumPrecision": null,
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        },
+        {
+          "name": "languageCode",
+          "source": "/document/language"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "persons",
+          "targetName": "people"
+        },
+        {
+          "name": "organizations",
+          "targetName": "organizations"
+        },
+        {
+          "name": "locations",
+          "targetName": "locations"
+        },
+        {
+          "name": "namedEntities",
+          "targetName": "namedEntities"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.KeyPhraseExtractionSkill",
+      "name": "#2",
+      "description": null,
+      "context": "/document/content",
+      "defaultLanguageCode": "en",
+      "maxKeyPhraseCount": null,
+      "modelVersion": null,
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        },
+        {
+          "name": "languageCode",
+          "source": "/document/language"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "keyPhrases",
+          "targetName": "keyphrases"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.LanguageDetectionSkill",
+      "name": "#3",
+      "description": null,
+      "context": "/document",
+      "defaultCountryHint": null,
+      "modelVersion": null,
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "languageCode",
+          "targetName": "language"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.TranslationSkill",
+      "name": "#4",
+      "description": null,
+      "context": "/document/content",
+      "defaultFromLanguageCode": null,
+      "defaultToLanguageCode": "en",
+      "suggestedFrom": "en",
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "translatedText",
+          "targetName": "translated_text"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.PIIDetectionSkill",
+      "name": "#5",
+      "description": null,
+      "context": "/document/content",
+      "defaultLanguageCode": "en",
+      "minimumPrecision": 0.5,
+      "maskingMode": "replace",
+      "maskingCharacter": "*",
+      "modelVersion": null,
+      "piiCategories": [],
+      "domain": "none",
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        },
+        {
+          "name": "languageCode",
+          "source": "/document/language"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "piiEntities",
+          "targetName": "pii_entities"
+        },
+        {
+          "name": "maskedText",
+          "targetName": "masked_text"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
+      "name": "#6",
+      "description": null,
+      "context": "/document",
+      "insertPreTag": " ",
+      "insertPostTag": " ",
+      "inputs": [
+        {
+          "name": "text",
+          "source": "/document/content"
+        },
+        {
+          "name": "itemsToInsert",
+          "source": "/document/normalized_images/*/text"
+        },
+        {
+          "name": "offsets",
+          "source": "/document/normalized_images/*/contentOffset"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mergedText",
+          "targetName": "merged_content"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
+      "name": "#7",
+      "description": null,
+      "context": "/document/normalized_images/*",
+      "textExtractionAlgorithm": null,
+      "lineEnding": "Space",
+      "defaultLanguageCode": "en",
+      "detectOrientation": true,
+      "inputs": [
+        {
+          "name": "image",
+          "source": "/document/normalized_images/*"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "targetName": "text"
+        },
+        {
+          "name": "layoutText",
+          "targetName": "layoutText"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Vision.ImageAnalysisSkill",
+      "name": "#8",
+      "description": null,
+      "context": "/document/normalized_images/*",
+      "defaultLanguageCode": "en",
+      "visualFeatures": [
+        "tags",
+        "description"
+      ],
+      "details": [],
+      "inputs": [
+        {
+          "name": "image",
+          "source": "/document/normalized_images/*"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tags",
+          "targetName": "imageTags"
+        },
+        {
+          "name": "description",
+          "targetName": "imageCaption"
+        }
+      ]
+    }
+  ],
+  "cognitiveServices": {
+    "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+    "description": "cogSvcs",
+    "key": "$COGNITIVE_SERVICES_KEY"
+  },
+  "knowledgeStore": null,
+  "encryptionKey": null
+}

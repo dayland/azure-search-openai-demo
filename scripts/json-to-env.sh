@@ -41,7 +41,12 @@ jq -r  '
         {
             "path": "resourcE_GROUP_NAME",
             "env_var": "RESOURCE_GROUP_NAME"
+        },
+        {
+            "path": "coG_SERVICES_FOR_SEARCH_KEY",
+            "env_var": "COGNITIVE_SERVICES_KEY"
         }
+        
     ]
         as $env_vars_to_extract
     |
