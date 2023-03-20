@@ -30,6 +30,10 @@
         "name": "base64Encode",
         "parameters": null
       }
+    },
+    {
+      "sourceFieldName": "metadata_storage_path",
+      "targetFieldName": "file_storage_path"
     }
   ],
   "outputFieldMappings": [

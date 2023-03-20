@@ -17,6 +17,21 @@
         "fields": []
       },
       {
+        "name": "extracted_content",
+        "type": "Edm.String",
+        "facetable": false,
+        "filterable": false,
+        "key": false,
+        "retrievable": true,
+        "searchable": true,
+        "sortable": false,
+        "analyzer": "standard.lucene",
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
         "name": "metadata_storage_content_type",
         "type": "Edm.String",
         "facetable": false,
@@ -93,6 +108,21 @@
         "facetable": false,
         "filterable": false,
         "key": true,
+        "retrievable": true,
+        "searchable": false,
+        "sortable": false,
+        "analyzer": null,
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
+        "name": "file_storage_path",
+        "type": "Edm.String",
+        "facetable": false,
+        "filterable": false,
+        "key": false,
         "retrievable": true,
         "searchable": false,
         "sortable": false,
@@ -456,7 +486,7 @@
             "titleField": null,
             "prioritizedContentFields": [
               {
-                "fieldName": "merged_content"
+                "fieldName": "content"
               },
               {
                 "fieldName": "translated_text"

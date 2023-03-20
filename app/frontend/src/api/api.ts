@@ -62,5 +62,11 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
 }
 
 export function getCitationFilePath(citation: string): string {
-    return `/content/${citation}`;
+    const xhr = new XMLHttpRequest();
+    const url = '/content/' + citation;
+    xhr.open('GET', url, true);
+    //xhr.setRequestHeader('Content-Type', 'application/json');
+    const body = JSON.stringify({"path": citation});
+    xhr.send(body);
+    return xhr.response;
 }

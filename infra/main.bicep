@@ -79,6 +79,7 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
+      AZURE_BLOB_STORATE_KEY: storage.outputs.key
       AZURE_OPENAI_SERVICE: azureOpenAIServiceName//cognitiveServices.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchServices.outputs.name

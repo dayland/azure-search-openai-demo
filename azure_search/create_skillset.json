@@ -147,36 +147,58 @@
       ]
     },
     {
-      "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
+      "@odata.type": "#Microsoft.Skills.Util.DocumentExtractionSkill",
       "name": "#6",
-      "description": null,
+      "parsingMode": "default",
+      "dataToExtract": "contentAndMetadata",
+      "configuration": {
+          "imageAction": "generateNormalizedImages",
+          "normalizedImageMaxWidth": 2000,
+          "normalizedImageMaxHeight": 2000
+      },
       "context": "/document",
-      "insertPreTag": " ",
-      "insertPostTag": " ",
       "inputs": [
         {
-          "name": "text",
-          "source": "/document/content"
-        },
-        {
-          "name": "itemsToInsert",
-          "source": "/document/normalized_images/*/text"
-        },
-        {
-          "name": "offsets",
-          "source": "/document/normalized_images/*/contentOffset"
+          "name": "file_data",
+          "source": "/document/file_data"
         }
       ],
       "outputs": [
         {
-          "name": "mergedText",
-          "targetName": "merged_content"
+          "name": "content",
+          "targetName": "extracted_content"
+        },
+        {
+          "name": "normalized_images",
+          "targetName": "extracted_normalized_images"
         }
       ]
     },
     {
-      "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
+      "@odata.type": "#Microsoft.Skills.Util.ConditionalSkill",
       "name": "#7",
+      "context": "/document",
+      "inputs": [
+          { "name": "condition", "source": "= $(/document/extracted_content) == null" },
+          { "name": "whenTrue", "source": "/document/content" },
+          { "name": "whenFalse", "source": "/document/extracted_content" }
+      ],
+      "outputs": [ { "name": "output", "targetName": "merged_content" } ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Util.ConditionalSkill",
+      "name": "#8",
+      "context": "/document/normalized_images/*",
+      "inputs": [
+          { "name": "condition", "source": "= $(/document/normalized_images/*/text) != null" },
+          { "name": "whenTrue", "source": "/document/normalized_images/*/text" },
+          { "name": "whenFalse", "source": "/document/content" }
+      ],
+      "outputs": [ { "name": "output", "targetName": "merged_content" } ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
+      "name": "#9",
       "description": null,
       "context": "/document/normalized_images/*",
       "textExtractionAlgorithm": null,
@@ -202,7 +224,7 @@
     },
     {
       "@odata.type": "#Microsoft.Skills.Vision.ImageAnalysisSkill",
-      "name": "#8",
+      "name": "#10",
       "description": null,
       "context": "/document/normalized_images/*",
       "defaultLanguageCode": "en",
