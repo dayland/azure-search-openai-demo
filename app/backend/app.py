@@ -10,13 +10,11 @@ from approaches.retrievethenread import RetrieveThenReadApproach
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.readdecomposeask import ReadDecomposeAsk
 from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
-from azure.storage.blob import BlobServiceClient,generate_blob_sas,BlobSasPermissions
-from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient
 
 # Replace these with your own values, either in environment variables or directly here
 AZURE_BLOB_STORAGE_ACCOUNT = os.environ.get("AZURE_BLOB_STORAGE_ACCOUNT") or "mystorageaccount"
 AZURE_BLOB_STORAGE_CONTAINER = os.environ.get("AZURE_BLOB_STORAGE_CONTAINER") or "content"
-AZURE_BLOB_STORAGE_KEY = os.environ.get("AZURE_BLOB_STORAGE_KEY") or ""
 AZURE_SEARCH_SERVICE = os.environ.get("AZURE_SEARCH_SERVICE") or "gptkb"
 AZURE_SEARCH_INDEX = os.environ.get("AZURE_SEARCH_INDEX") or "gptkbindex"
 AZURE_OPENAI_SERVICE = os.environ.get("AZURE_OPENAI_SERVICE") or "myopenai"
@@ -74,19 +72,17 @@ def static_file(path):
     return app.send_static_file(path)
 
 # Return blob path with SAS token for citation access
-@app.route("/content/<path>")
-def content_file():
-    path = request.json["path"]
-    print('generating SAS token for ' + path)
-    blob_sas_token = generate_blob_sas(
-        account_name=AZURE_BLOB_STORAGE_ACCOUNT,
-        container_name=AZURE_BLOB_STORAGE_CONTAINER,
-        blob_name=path,
-        account_key=AZURE_BLOB_STORAGE_KEY,
-        permission=BlobSasPermissions(read=True),
-        expiry=datetime.utcnow() + timedelta(hours=1)
-    )
-    return f"https://{AZURE_BLOB_STORAGE_ACCOUNT}.blob.core.windows.net/{AZURE_BLOB_STORAGE_CONTAINER}/{path}?{blob_sas_token}"
+@app.route("/content/<path:path>")
+def content_file(path):
+    blob = blob_container.get_blob_client(path).download_blob()
+    mime_type = blob.properties["content_settings"]["content_type"]
+    file_extension = blob.properties["name"].split(".")[-1:]
+    if mime_type == "application/octet-stream":
+        mime_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    if mime_type == "text/plain" and file_extension[0] in ["htm","html"]:
+        mime_type = "text/html"
+    print("Using mime type: " + mime_type + "for file with extension: " + file_extension[0])
+    return blob.readall(), 200, {"Content-Type": mime_type, "Content-Disposition": f"inline; filename={path}"}
     
 @app.route("/ask", methods=["POST"])
 def ask():

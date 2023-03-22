@@ -22,10 +22,10 @@
         "facetable": false,
         "filterable": false,
         "key": false,
-        "retrievable": true,
-        "searchable": true,
+        "retrievable": false,
+        "searchable": false,
         "sortable": false,
-        "analyzer": "standard.lucene",
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
@@ -136,9 +136,9 @@
         "name": "metadata_storage_file_extension",
         "type": "Edm.String",
         "facetable": false,
-        "filterable": false,
+        "filterable": true,
         "key": false,
-        "retrievable": false,
+        "retrievable": true,
         "searchable": false,
         "sortable": false,
         "analyzer": null,
@@ -266,9 +266,9 @@
         "filterable": false,
         "key": false,
         "retrievable": true,
-        "searchable": true,
+        "searchable": false,
         "sortable": false,
-        "analyzer": "standard.lucene",
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
@@ -388,9 +388,9 @@
         "filterable": false,
         "key": false,
         "retrievable": true,
-        "searchable": true,
+        "searchable": false,
         "sortable": false,
-        "analyzer": "standard.lucene",
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
@@ -403,33 +403,33 @@
         "filterable": false,
         "key": false,
         "retrievable": true,
-        "searchable": true,
+        "searchable": false,
         "sortable": false,
-        "analyzer": "standard.lucene",
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
         "fields": []
       },
       {
-        "name": "text",
+        "name": "ocr_text",
         "type": "Collection(Edm.String)",
         "facetable": false,
         "filterable": false,
         "retrievable": true,
-        "searchable": true,
-        "analyzer": "standard.lucene",
+        "searchable": false,
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
         "fields": []
       },
       {
-        "name": "layoutText",
+        "name": "ocr_layoutText",
         "type": "Collection(Edm.String)",
         "facetable": false,
         "filterable": false,
-        "retrievable": true,
+        "retrievable": false,
         "searchable": false,
         "analyzer": null,
         "indexAnalyzer": null,
@@ -443,8 +443,8 @@
         "facetable": false,
         "filterable": false,
         "retrievable": true,
-        "searchable": true,
-        "analyzer": "standard.lucene",
+        "searchable": false,
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
@@ -456,8 +456,36 @@
         "facetable": false,
         "filterable": false,
         "retrievable": true,
-        "searchable": true,
-        "analyzer": "standard.lucene",
+        "searchable": false,
+        "analyzer": null,
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
+        "name": "merged_content_imgCaption",
+        "type": "Edm.String",
+        "facetable": false,
+        "filterable": false,
+        "retrievable": false,
+        "searchable": false,
+        "sortable": false,
+        "analyzer": null,
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
+        "name": "merged_content_imgCaption_ocrtext",
+        "type": "Edm.String",
+        "facetable": false,
+        "filterable": false,
+        "retrievable": false,
+        "searchable": false,
+        "sortable": false,
+        "analyzer": null,
         "indexAnalyzer": null,
         "searchAnalyzer": null,
         "synonymMaps": [],
@@ -486,19 +514,17 @@
             "titleField": null,
             "prioritizedContentFields": [
               {
-                "fieldName": "content"
-              },
-              {
-                "fieldName": "translated_text"
-              },
-              {
-                "fieldName": "imageCaption"
-              },
-              {
-                "fieldName": "text"
+                "fieldName": "merged_content"
               }
             ],
-            "prioritizedKeywordsFields": []
+            "prioritizedKeywordsFields": [
+              {
+                "fieldName": "imageTags"
+              },
+              {
+                "fieldName": "keyphrases"
+              }
+            ]
           }
         }
       ]

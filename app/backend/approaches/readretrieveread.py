@@ -19,7 +19,7 @@ from lookuptool import CsvLookupTool
 class ReadRetrieveReadApproach(Approach):
 
     template_prefix = \
-"You are an intelligent assistant helping Contoso Inc employees with their healthcare plan questions and employee handbook questions. " \
+"You are an intelligent assistant helping Contoso Inc employees with their questions about public sector data. " \
 "Answer the question using only the data provided in the information sources below. " \
 "Each source has a name followed by colon and the actual data, quote the source name for each piece of data you use in the response. " \
 "For example, if the question is \"What color is the sky?\" and one of the information sources says \"info123: the sky is blue whenever it's not cloudy\", then answer with \"The sky is blue [info123]\" " \
@@ -36,7 +36,7 @@ Question: {input}
 
 Thought: {agent_scratchpad}"""    
 
-    CognitiveSearchToolDescription = "useful for searching the Microsoft employee benefits information such as healthcare plans, retirement plans, etc."
+    CognitiveSearchToolDescription = "useful for searching the public sector content that has been indexed."
 
     def __init__(self, search_client: SearchClient, openai_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client
@@ -62,9 +62,9 @@ Thought: {agent_scratchpad}"""
         else:
             r = self.search_client.search(q, filter=filter, top=top)
         if use_semantic_captions:
-            self.results = [doc[self.sourcepage_field] + ":" + nonewlines(" -.- ".join([c.text for c in doc['@search.captions']])) for doc in r]
+            self.results = ["/".join(doc[self.sourcepage_field].split("/")[4:]) + ":" + nonewlines(" -.- ".join([c.text for c in doc['@search.captions']])) for doc in r]
         else:
-            self.results = [doc[self.sourcepage_field] + ":" + nonewlines(doc[self.content_field][:250]) for doc in r]
+            self.results = ["/".join(doc[self.sourcepage_field].split("/")[4:]) + ":" + nonewlines(doc[self.content_field][:250]) for doc in r]
         content = "\n".join(self.results)
         return content
         

@@ -9,11 +9,11 @@ export type ExampleModel = {
 
 const EXAMPLES: ExampleModel[] = [
     {
-        text: "How many nuclear reactors does India have?",
-        value: "How many nuclear reactors does India have?"
+        text: "Do we have any images of an airplane with a tailsign of Z-102?",
+        value: "Do we have any images of an airplane with a tailsign of Z-102?"
     },
     { text: "What services does Toyota provide to the defense industry?", value: "What services does Toyota provide to the defense industry?" },
-    { text: "What size ship is on the water?", value: "What size ship is on the water?" }
+    { text: "Compare the destroyers of the US Navy and the Chinese Navy.", value: "Compare the destroyers of the US Navy and the Chinese Navy." }
 ];
 
 interface Props {

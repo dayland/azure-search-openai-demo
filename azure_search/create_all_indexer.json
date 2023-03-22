@@ -38,19 +38,19 @@
   ],
   "outputFieldMappings": [
     {
-      "sourceFieldName": "/document/merged_content/people",
+      "sourceFieldName": "/document/content/people",
       "targetFieldName": "people"
     },
     {
-      "sourceFieldName": "/document/merged_content/organizations",
+      "sourceFieldName": "/document/content/organizations",
       "targetFieldName": "organizations"
     },
     {
-      "sourceFieldName": "/document/merged_content/locations",
+      "sourceFieldName": "/document/content/locations",
       "targetFieldName": "locations"
     },
     {
-      "sourceFieldName": "/document/merged_content/keyphrases",
+      "sourceFieldName": "/document/content/keyphrases",
       "targetFieldName": "keyphrases"
     },
     {
@@ -58,7 +58,7 @@
       "targetFieldName": "language"
     },
     {
-      "sourceFieldName": "/document/merged_content/translated_text",
+      "sourceFieldName": "/document/content/translated_text",
       "targetFieldName": "translated_text"
     },
     {
@@ -74,12 +74,12 @@
       "targetFieldName": "merged_content"
     },
     {
-      "sourceFieldName": "/document/normalized_images/*/text",
-      "targetFieldName": "text"
+      "sourceFieldName": "/document/normalized_images/*/ocr_text",
+      "targetFieldName": "ocr_text"
     },
     {
-      "sourceFieldName": "/document/normalized_images/*/layoutText",
-      "targetFieldName": "layoutText"
+      "sourceFieldName": "/document/normalized_images/*/ocr_layoutText",
+      "targetFieldName": "ocr_layoutText"
     },
     {
       "sourceFieldName": "/document/normalized_images/*/imageTags/*/name",
@@ -88,6 +88,14 @@
     {
       "sourceFieldName": "/document/normalized_images/*/imageCaption",
       "targetFieldName": "imageCaption"
+    },
+    {
+      "sourceFieldName": "/document/merged_content_imgCaption_ocrtext",
+      "targetFieldName": "merged_content_imgCaption_ocrtext"
+    },
+    {
+      "sourceFieldName": "document/merged_content_imgCaption",
+      "targetFieldName": "merged_content_imgCaption"
     }
   ],
   "encryptionKey": null
