@@ -96,6 +96,10 @@
     {
       "sourceFieldName": "document/merged_content_imgCaption",
       "targetFieldName": "merged_content_imgCaption"
+    },
+    {
+      "sourceFieldName": "document/content/chunks",
+      "targetFieldName": "chunks"
     }
   ],
   "encryptionKey": null

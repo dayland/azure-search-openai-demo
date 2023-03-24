@@ -290,6 +290,20 @@
         "fields": []
       },
       {
+        "name": "chunks",
+        "type": "Collection(Edm.String)",
+        "facetable": false,
+        "filterable": false,
+        "retrievable": true,
+        "searchable": false,
+        "analyzer": null,
+        "indexAnalyzer": null,
+        "searchAnalyzer": null,
+        "sortable": false,
+        "synonymMaps": [],
+        "fields": []
+      },
+      {
         "name": "pii_entities",
         "type": "Collection(Edm.ComplexType)",
         "analyzer": null,

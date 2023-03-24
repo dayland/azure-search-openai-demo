@@ -163,7 +163,7 @@ module storage 'core/storage/storage-account.bicep' = {
     }
     deleteRetentionPolicy: {
       enabled: true
-      days: 2
+      days: 7
     }
     containers: [
       {
