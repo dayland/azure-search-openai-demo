@@ -1,8 +1,14 @@
 import openai
+import streamlit as st
 from azure.search.documents import SearchClient
 from azure.search.documents.models import QueryType
 from approaches.approach import Approach
 from text import nonewlines
+from collections import OrderedDict
+from langchain.docstore.document import Document
+from openai.error import OpenAIError
+from typing import List
+from approaches.utils import get_answer
 
 # Simple retrieve-then-read implementation, using the Cognitive Search and OpenAI APIs directly. It first retrieves
 # top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion 
@@ -20,7 +26,7 @@ Sources:
 {chat_history}
 """
 
-    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next about their military intelligence data. 
+    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next about their data. 
     Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
     Try not to repeat questions that have already been asked.
     Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
@@ -46,6 +52,7 @@ Search query:
         self.gpt_deployment = gpt_deployment
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
+        self.openai_key = oai_service_key
         openai.api_base = 'https://' + oai_service_name + '.openai.azure.com/'
         openai.api_type = 'azure'
         openai.api_key = oai_service_key
@@ -68,8 +75,9 @@ Search query:
         q = completion.choices[0].text
 
         # STEP 2: Retrieve relevant documents from the search index with the GPT optimized query
+        docs = []
         if overrides.get("semantic_ranker"):
-            r = self.search_client.search(q, 
+            rslt = self.search_client.search(q, 
                                           filter=filter,
                                           query_type=QueryType.SEMANTIC, 
                                           query_language="en-us", 
@@ -78,34 +86,49 @@ Search query:
                                           top=top, 
                                           query_caption="extractive|highlight-false" if use_semantic_captions else None)
         else:
-            r = self.search_client.search(q, filter=filter, top=top)
+            rslt = self.search_client.search(q, filter=filter, top=top)
         if use_semantic_captions:
-            results = ["/".join(doc[self.sourcepage_field].split("/")[4:]) + ": " + nonewlines(" . ".join([c.text for c in doc['@search.captions']])) for doc in r]
+            for result in rslt:
+                if overrides.get("semantic_ranker") and result['@search.reranker_score'] > 0.0:
+                    docs.append(Document(page_content=nonewlines("/".join(result[self.sourcepage_field].split("/")[4:]) + ": " + " . ".join([c.text for c in result['@search.captions']])), metadata={"source": "/".join(result[self.sourcepage_field].split("/")[4:])}))
+                else:
+                    docs.append(Document(page_content=nonewlines("/".join(result[self.sourcepage_field].split("/")[4:]) + ": " + " . ".join([c.text for c in result['@search.captions']])), metadata={"source": "/".join(result[self.sourcepage_field].split("/")[4:])}))
+                results = ["/".join(doc[self.sourcepage_field].split("/")[4:]) + ": " + nonewlines(" . ".join([c.text for c in doc['@search.captions']])) for doc in rslt]
+                #print("---/n" + "/".join(result[self.sourcepage_field].split("/")[4:]) + ": " + nonewlines(result[self.content_field]) + "/n---/n")
         else:
-            results = ["/".join(doc[self.sourcepage_field].split("/")[4:]) + ": " + nonewlines(doc[self.content_field]) for doc in r]
-        content = "\n".join(results)
+            for result in rslt:
+                if overrides.get("semantic_ranker") and result['@search.reranker_score'] > 0.0:
+                    docs.append(Document(page_content=nonewlines("/".join(result[self.sourcepage_field].split("/")[4:]) + ": " + result[self.content_field]), metadata={"source": "/".join(result[self.sourcepage_field].split("/")[4:])}))
+                else:
+                    docs.append(Document(page_content=nonewlines("/".join(result[self.sourcepage_field].split("/")[4:]) + ": " + result[self.content_field]), metadata={"source": "/".join(result[self.sourcepage_field].split("/")[4:])}))
+                #print("---/n" + "/".join(result[self.sourcepage_field].split("/")[4:]) + ": " + nonewlines(result[self.content_field]) + "/n---/n")
+            results = ["/".join(doc[self.sourcepage_field].split("/")[4:]) + ": " + nonewlines(doc[self.content_field]) for doc in rslt]
 
-        follow_up_questions_prompt = self.follow_up_questions_prompt_content if overrides.get("suggest_followup_questions") else ""
+        print("There are " + str(len(docs)) + " items in docs")
+        #content = "\n".join(results)
+        
+        #follow_up_questions_prompt = self.follow_up_questions_prompt_content if overrides.get("suggest_followup_questions") else ""
         
         # Allow client to replace the entire prompt, or to inject into the exiting prompt using >>>
-        prompt_override = overrides.get("prompt_template")
-        if prompt_override is None:
-            prompt = self.prompt_prefix.format(injected_prompt="", sources=content, chat_history=self.get_chat_history_as_text(history), follow_up_questions_prompt=follow_up_questions_prompt)
-        elif prompt_override.startswith(">>>"):
-            prompt = self.prompt_prefix.format(injected_prompt=prompt_override[3:] + "\n", sources=content, chat_history=self.get_chat_history_as_text(history), follow_up_questions_prompt=follow_up_questions_prompt)
-        else:
-            prompt = prompt_override.format(sources=content, chat_history=self.get_chat_history_as_text(history), follow_up_questions_prompt=follow_up_questions_prompt)
+        #prompt_override = overrides.get("prompt_template")
+        #if prompt_override is None:
+        #    prompt = self.prompt_prefix.format(injected_prompt="", sources=content, chat_history=self.get_chat_history_as_text(history), follow_up_questions_prompt=follow_up_questions_prompt)
+        #elif prompt_override.startswith(">>>"):
+        #    prompt = self.prompt_prefix.format(injected_prompt=prompt_override[3:] + "\n", sources=content, chat_history=self.get_chat_history_as_text(history), follow_up_questions_prompt=follow_up_questions_prompt)
+        #else:
+        #    prompt = prompt_override.format(sources=content, chat_history=self.get_chat_history_as_text(history), follow_up_questions_prompt=follow_up_questions_prompt)
 
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history
-        completion = openai.Completion.create(
-            engine=self.chatgpt_deployment, 
-            prompt=prompt, 
-            temperature=overrides.get("temperature") or 0.7, 
-            max_tokens=1024, 
-            n=1, 
-            stop=["<|im_end|>", "<|im_start|>"])
+        #completion = openai.Completion.create(
+        #    engine=self.chatgpt_deployment, 
+        #    prompt=prompt, 
+        #    temperature=overrides.get("temperature") or 0.7, 
+        #    max_tokens=1024, 
+        #    n=1, 
+        #    stop=["<|im_end|>", "<|im_start|>"])
+        answer = get_answer(docs=docs,query=history[-1]["user"],language='en',chain_type="refine",deployment_name=self.gpt_deployment,openai_key=self.openai_key,temperature=0.7,max_tokens=1024)
 
-        return {"data_points": results, "answer": completion.choices[0].text, "thoughts": f"Searched for:<br>{q}<br><br>Prompt:<br>" + prompt.replace('\n', '<br>')}
+        return {"data_points": results, "answer": answer["output_text"], "thoughts": f"Searched for:<br>{q}<br><br>Prompt:<br>" + prompt.replace('\n', '<br>')}
     
     def get_chat_history_as_text(self, history, include_last_turn=True, approx_max_tokens=1000) -> str:
         history_text = ""
