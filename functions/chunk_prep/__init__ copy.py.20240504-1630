@@ -24,7 +24,7 @@ XY_ROUNDING_FACTOR = 1
 CHUNK_TARGET_SIZE = 750
 REAL_WORDS_TARGET = 0.25
 TARGET_PAGES = "ALL"          # ALL or Custom page numbers for multi-page documents(PDF/TIFF). Input the page numbers and/or ranges of pages you want to get in the result. For a range of pages, use a hyphen, like pages="1-3, 5-6". Separate each page number or range with a comma.
-
+SECTIONS_PER_CHUNK = 3
 
 def main(myblob: func.InputStream):
 
@@ -463,9 +463,12 @@ def analyze_layout(myblob: func.InputStream):
     section_name = ""
     title_name = ""
     target_size_reached = False
+    chunk_output = []
     
+    # group paragraphs into sections
+    i = 1
     for paragraph_element in pargraph_elements:   
-
+        
         if paragraph_element["role"] == None and contains_real_words(paragraph_element["content"]) == True:
             title_name = paragraph_element["title"]
             section_name = paragraph_element["section_heading"]
@@ -478,27 +481,51 @@ def analyze_layout(myblob: func.InputStream):
                 # if target chunk size is hit then write out file
                 target_size_reached = True 
 
-        if (paragraph_element["role"] != None or target_size_reached == True) and chunk_text != ""  :
-            # if its a new section then write out file and if there is text to write
-            chunk_output = title_name + "\n" + \
-                section_name + "\n\n" + \
-                chunk_text       
-            output_filename = os.path.splitext(os.path.basename(base_filename))[0] + f"-{file_number}" + ".txt"
-            block_blob_client = blob_service_client.get_blob_client(
-                container=azure_blob_content_storage_container, blob=f'{folder_set}/{os.path.basename(myblob.name)}/{output_filename}')
-            block_blob_client.upload_blob(chunk_output.encode('utf-8'), overwrite=True)
+        # output section, or part of section if max chuck size is reached, OR if this is a new section, OR if this is the last paragraph in the document, write to the chunk array
+        if (paragraph_element["role"] != None or target_size_reached == True or (i == len(pargraph_elements))) and chunk_text != ""  :
+            # if its a new section then build the text block
+            chunk_text = title_name + " - " + section_name + "\n" + \
+                chunk_text + "\n\n\n"   
+            chunk_output.append(chunk_text)
 
-            # reset counters
-            file_number += 1            
-
-            # if we wrote the file because we hit the token target, then start with the last paragraph porcessed
+            # if we wrote the file because we hit the token target, then start with the last paragraph processed
             if target_size_reached == True:
                 chunk_text = paragraph_element["content"]
                 chunk_size = paragraph_size   
                 target_size_reached = False 
             else:
                 chunk_text = ""
-                chunk_size = 0    
+                chunk_size = 0   
+
+        i += 1
+
+
+
+    # iterate over the chunked output and output in the format of sections to text files ... i-1, i, and i+1
+    i = 0
+    file_text = ""
+    write_file = False
+    while i <= len(chunk_output)-1:
+
+        if i == len(chunk_output)-1:
+            file_text = chunk_output[i-1] + "\n" \
+                + chunk_output[i]
+            write_file = True
+
+        elif i >= 1:
+            file_text = chunk_output[i-1] + "\n" \
+                + chunk_output[i] + "\n" \
+                + chunk_output[i+1]    
+            write_file = True
+        
+        if write_file == True:
+            output_filename = os.path.splitext(os.path.basename(base_filename))[0] + f"-{file_number}" + ".txt"
+            block_blob_client = blob_service_client.get_blob_client(
+                container=azure_blob_content_storage_container, blob=f'{folder_set}/{output_filename}')
+            block_blob_client.upload_blob(file_text.encode('utf-8'), overwrite=True)
+            file_number += 1   
+
+        i += 1
 
     print("done")
 
